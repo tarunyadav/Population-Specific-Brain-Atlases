@@ -34,7 +34,7 @@ function [Transformation] = feature_mapping(src, dst,step_x,step_y,step_theta)
          for j = 1:dst_column_size
             %for s = .8:.2:1.2 
              for theta = -max_theta:step_theta:max_theta
-              
+                %imrotate(src,theta,'bilinear')
                 T = ([dst(1,j) ; dst(2,j)]) - ([125 ; 125]+ ([cos(theta*pi/180) -sin(theta*pi/180); sin(theta*pi/180) cos(theta*pi/180)] *([-125; -125]+[src(1,i) ; src(2,i)])));
                 Tx = T(1,1);
                 Ty = T(2,1);

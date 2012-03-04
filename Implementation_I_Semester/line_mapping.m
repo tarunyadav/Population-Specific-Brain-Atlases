@@ -76,9 +76,9 @@ function [Transformation] = line_mapping(src_lines,dst_lines,src, dst,step_x,ste
      min_distance = 10000000;
      min_distance_row = 1;
      for i=1:1:row_trans
-         if(transformations(i,4)>=20)
-             disp(transformations(i,:)); 
-         end
+        % if(transformations(i,4)>=20)
+          %   disp(transformations(i,:)); 
+         %end
          if (transformations(i,4)==value)
             %disp(transformations(i,:)); 
             distance = (transformations(i,1)*transformations(i,1) + transformations(i,2)*transformations(i,2));
@@ -89,7 +89,7 @@ function [Transformation] = line_mapping(src_lines,dst_lines,src, dst,step_x,ste
          end
          
      end
-     disp(transformations(min_distance_row,:));
+     %disp(transformations(min_distance_row,:));
      
      %Transformation = transformations(maximum,:);
      Transformation = transformations(min_distance_row,:);

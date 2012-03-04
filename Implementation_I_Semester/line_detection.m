@@ -1,4 +1,4 @@
-function[src_lines dst_lines]= line_detection(src_image_name,dst_image_name)
+function[src_lines dst_lines src_points dst_points]= line_detection(src_image_name,dst_image_name)
     
     I=imread(sprintf('images/%s',src_image_name));
     J=imread(sprintf('images/%s',dst_image_name));
@@ -85,13 +85,13 @@ function[src_lines dst_lines]= line_detection(src_image_name,dst_image_name)
     src_lines = [];
     dst_lines = [];
     for k = 1:length(lines_s)
-        %src_points = [src_points; lines_s(k).point1;lines_s(k).point2];
+        src_points = [src_points; lines_s(k).point1;lines_s(k).point2];
         src_lines = [src_lines; lines_s(k).point1 lines_s(k).point2 ((lines_s(k).point2(1,2)-lines_s(k).point1(1,2))/(lines_s(k).point2(1,1)-lines_s(k).point1(1,1)))];
         %disp(src_lines(k,:));
         
     end
     for k = 1:length(lines_d)
-        %dst_points = [dst_points; lines_d(k).point1;lines_d(k).point2];
+        dst_points = [dst_points; lines_d(k).point1;lines_d(k).point2];
         dst_lines = [dst_lines; lines_d(k).point1 lines_d(k).point2 ((lines_d(k).point2(1,2)-lines_d(k).point1(1,2))/(lines_d(k).point2(1,1)-lines_d(k).point1(1,1)))];
         %disp(dst_lines(k))
     end

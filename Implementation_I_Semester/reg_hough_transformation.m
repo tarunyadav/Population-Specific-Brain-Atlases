@@ -1,7 +1,7 @@
 function[ ]= reg_hough_transformation(src_image_name,dst_image_name,step_x,step_y,step_theta)
     
     
-    [src_lines dst_lines]=line_detection_hough(src_image_name,dst_image_name);
+    [src_lines dst_lines src_points dst_points]=line_detection_hough(src_image_name,dst_image_name);
    
     transformation =line_mapping(src_lines,dst_lines,transpose(src_points),transpose(dst_points),step_x,step_y,step_theta);
      
