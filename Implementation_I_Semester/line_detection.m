@@ -1,4 +1,4 @@
-function[lines]= line_detection(src_image_name,dst_image_name)
+function[src_lines dst_lines]= line_detection(src_image_name,dst_image_name)
     
     I=imread(sprintf('images/%s',src_image_name));
     J=imread(sprintf('images/%s',dst_image_name));
@@ -85,58 +85,21 @@ function[lines]= line_detection(src_image_name,dst_image_name)
     src_lines = [];
     dst_lines = [];
     for k = 1:length(lines_s)
-        src_points = [src_points; lines_s(k).point1;lines_s(k).point2];
+        %src_points = [src_points; lines_s(k).point1;lines_s(k).point2];
         src_lines = [src_lines; lines_s(k).point1 lines_s(k).point2 ((lines_s(k).point2(1,2)-lines_s(k).point1(1,2))/(lines_s(k).point2(1,1)-lines_s(k).point1(1,1)))];
         %disp(src_lines(k,:));
         
     end
     for k = 1:length(lines_d)
-        dst_points = [dst_points; lines_d(k).point1;lines_d(k).point2];
+        %dst_points = [dst_points; lines_d(k).point1;lines_d(k).point2];
         dst_lines = [dst_lines; lines_d(k).point1 lines_d(k).point2 ((lines_d(k).point2(1,2)-lines_d(k).point1(1,2))/(lines_d(k).point2(1,1)-lines_d(k).point1(1,1)))];
         %disp(dst_lines(k))
     end
     
-    disp(src_lines);
-    disp(dst_lines);
-    subplot(2,2,1);imshow(SRC);
-    subplot(2,2,2);imshow(DST);
-    
-    step_x = 30;step_y=30;step_theta=5;
-    transformation =line_mapping(src_lines,dst_lines,transpose(src_points),transpose(dst_points),step_x,step_y,step_theta);
-    
-    
-    trans_X = transformation(1,1);
-    trans_Y = transformation(1,2);
-    theta = transformation(1,3);
-
-    %imshow(SRC);
-    T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
-    tformfwd([trans_X trans_Y],T);
-    REGISTERED= imtransform(SRC,T);
-    subplot(2,2,4);
-    %imshow(DST); hold on;
-    %figure,
-    imshow(REGISTERED);
-        
-%         figure, imshow(DST), hold on
-%     max_len = 0;
-%     for k = 1:length(lines_d)
-%        xy = [lines_d(k).point1; lines_d(k).point2];
-%        plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
-% 
-%        % Plot beginnings and ends of lines
-%        plot(xy(1,1),xy(1,2),'x','LineWidth',1,'Color','yellow');
-%        plot(xy(2,1),xy(2,2),'x','LineWidth',1,'Color','red');
-% 
-%        % Determine the endpoints of the longest line segment
-%        len = norm(lines_d(k).point1 - lines_d(k).point2);
-%        if ( len > max_len)
-%           max_len = len;
-%           xy_long = xy;
-%        end
-%     end
-% 
-%     % highlight the longest line segment
-%     plot(xy_long(:,1),xy_long(:,2),'LineWidth',1.5,'Color','red');
+    %disp(src_lines);
+    %disp(dst_lines);
+    %subplot(2,2,1);imshow(SRC);
+    %subplot(2,2,2);imshow(DST);
+ 
 
 end

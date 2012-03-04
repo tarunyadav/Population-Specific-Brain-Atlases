@@ -19,7 +19,7 @@ if 1 % tests on real images
   %f1 = edge(f2,'canny',.17);
   %f1 = edge(f2,'sobel');
   [ysize,xsize]=size(f1);
-  showgrey(f1)
+  %showgrey(f1)
 
 
   % set up parameters for point detection
@@ -35,8 +35,8 @@ if 1 % tests on real images
   % display detected points as ellipses
   %figure(gcf), clf
   
-  showgrey(f1), hold on
-  showellipticfeatures(posinit,[1 0 1]);
+  %showgrey(f1), hold on
+  %showellipticfeatures(posinit,[1 0 1]);
   
   %title('initial detection and shape estimate')
 %   disp('press a key ...')

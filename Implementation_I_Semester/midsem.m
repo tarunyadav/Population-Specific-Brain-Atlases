@@ -118,13 +118,42 @@ switch handles.det_algo;
     case 'Point Detection'
         subplot(handles.h(4));
         src_posinit=affdemo2(handles.src);
+        imshow(imread(sprintf('images/%s',handles.src))), hold on
+        showellipticfeatures(src_posinit,[1 0 1]);
+        
         subplot(handles.h(3));
         dst_posinit=affdemo2(handles.dst);
-        %refreshdisplays(imread(sprintf('images/%s',handles.src)),handles,src_init)
+        imshow(imread(sprintf('images/%s',handles.dst))), hold on
+        showellipticfeatures(dst_posinit,[1 0 1]);
+        %refreshdisplays()
         
         
-    case 'Line Detection'
-        %line_detection(handles.src,handles.dst);
+    case 'Line Detection(Hough Transformation)'
+        [src_lines dst_lines]=line_detection_hough(handles.src,handles.dst);
+        subplot(handles.h(4));
+        
+        imshow(imread(sprintf('images/%s',handles.src))), hold on
+        for k = 1:length(src_lines)
+            
+            xy = [src_lines(k,1:2); src_lines(k,3:4)];
+            plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
+            % Plot beginnings and ends of lines
+            plot(xy(1,1),xy(1,2),'x','LineWidth',1,'Color','yellow');
+            plot(xy(2,1),xy(2,2),'x','LineWidth',1,'Color','red');
+        end
+        
+        subplot(handles.h(3));
+        imshow(imread(sprintf('images/%s',handles.dst))), hold on
+        for k = 1:length(dst_lines)
+            xy = [dst_lines(k,1:2); dst_lines(k,3:4)];
+            plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
+            % Plot beginnings and ends of lines
+            plot(xy(1,1),xy(1,2),'x','LineWidth',1,'Color','yellow');
+            plot(xy(2,1),xy(2,2),'x','LineWidth',1,'Color','red');
+        end
+        
+    case 'Approx. Using Edges'
+        
 end
 % --- Executes on button press in map_run.
 function map_run_Callback(hObject, eventdata, handles)
