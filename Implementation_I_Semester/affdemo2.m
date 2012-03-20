@@ -15,7 +15,7 @@ if 1 % tests on real images
   %f1=il_rgb2gray(double(imread(sprintf('%s/car1-068-180.png',datapath))));
   %f1=il_rgb2gray(double(imread(sprintf('%s/car1-066-153.png',datapath))));
   %iptsetpref('ImshowAxesVisible','on');
-  f1=il_rgb2gray(double(imread(sprintf('%s/%s',datapath,filename))));
+  f1=il_rgb2gray(double(dicomread(sprintf('%s/%s',datapath,filename))));
   %f1 = edge(f2,'canny',.17);
   %f1 = edge(f2,'sobel');
   [ysize,xsize]=size(f1);

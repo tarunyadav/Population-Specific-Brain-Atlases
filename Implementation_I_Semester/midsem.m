@@ -94,7 +94,7 @@ handles.src=uigetfile({'*.jpg;*.tif;*.png;*.gif;*.dicom','All Image Files';...
 guidata(hObject,handles)
 
 subplot(handles.h(9)); 
-imshow(imread(sprintf('images/%s',handles.src)));
+imshow(dicomread(sprintf('images/%s',handles.src)),[]);
 
 % --- Executes on button press in choose_dst.
 function choose_dst_Callback(hObject, eventdata, handles)
@@ -108,7 +108,7 @@ function choose_dst_Callback(hObject, eventdata, handles)
 guidata(hObject,handles)
 
 subplot(handles.h(8));
-imshow(imread(sprintf('images/%s',handles.dst)));
+imshow(dicomread(sprintf('images/%s',handles.dst)),[]);
 
 % --- Executes on button press in det_run. 
 function det_run_Callback(hObject, eventdata, handles)
@@ -119,19 +119,19 @@ switch handles.det_algo;
     case 'Point Detection'
         subplot(handles.h(6));
         handles.src_posinit=affdemo2(handles.src);
-        imshow(imread(sprintf('images/%s',handles.src))), hold on
+        imshow(dicomread(sprintf('images/%s',handles.src)),[]), hold on
         showellipticfeatures(handles.src_posinit,[1 0 1]);
         
         subplot(handles.h(5));
         handles.dst_posinit=affdemo2(handles.dst);
-        imshow(imread(sprintf('images/%s',handles.dst))), hold on
+        imshow(dicomread(sprintf('images/%s',handles.dst)),[]), hold on
         showellipticfeatures(handles.dst_posinit,[1 0 1]);
            
     case 'Line Detection(Hough Transformation)'
         [handles.src_lines handles.dst_lines handles.src_points handles.dst_points]=line_detection_hough(handles.src,handles.dst);
         subplot(handles.h(6));
         
-        imshow(imread(sprintf('images/%s',handles.src))), hold on
+        imshow(dicomread(sprintf('images/%s',handles.src)),[]), hold on
         for k = 1:length(handles.src_lines)
             
             xy = [handles.src_lines(k,1:2); handles.src_lines(k,3:4)];
@@ -142,7 +142,7 @@ switch handles.det_algo;
         end
         
         subplot(handles.h(5));
-        imshow(imread(sprintf('images/%s',handles.dst))), hold on
+        imshow(dicomread(sprintf('images/%s',handles.dst)),[]), hold on
         for k = 1:length(handles.dst_lines)
             xy = [handles.dst_lines(k,1:2); handles.dst_lines(k,3:4)];
             plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
@@ -173,7 +173,7 @@ trans_Y = transformation(1,2);
 theta = -1*transformation(1,3);
 T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
 tformfwd([trans_X trans_Y],T);
-REGISTERED= imtransform(imread(sprintf('images/%s',handles.src)),T);
+REGISTERED= imtransform(dicomread(sprintf('images/%s',handles.src)),T);
 subplot(handles.h(4));
 imshow(REGISTERED,[]); 
 set(handles.translation_x,'String',transformation(1));

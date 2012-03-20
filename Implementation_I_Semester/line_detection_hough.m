@@ -1,7 +1,7 @@
  function[src_lines dst_lines src_points dst_points]= line_detection_hough(src_image_name,dst_image_name)
     
-    I=imread(sprintf('images/%s',src_image_name));
-    J=imread(sprintf('images/%s',dst_image_name));
+    I=dicomread(sprintf('images/%s',src_image_name));
+    J=dicomread(sprintf('images/%s',dst_image_name));
     SRC = edge(I(:,:,1),'sobel');
     DST = edge(J(:,:,1),'sobel');
     [H_s,theta_s,rho_s] = hough(SRC);
