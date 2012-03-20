@@ -1,0 +1,13 @@
+-------------Code to apply transformation or rotation to images-----------
+
+translatoin---T = maketform('affine',[1 0 0;0 1 0;20 30 1])
+                            I=imtransform(image,T,'XData',[1 size(image,2)],'YData',[1 size(image,1)])
+                            imshow(I,[])
+                            dicomwrite(I,'tarun.dcm')
+
+rotation simply in maketransform martix is for rotation and no xdata or ydata
+
+TODO:
+Progress bar:
+for set of 100 images:
+time taken
