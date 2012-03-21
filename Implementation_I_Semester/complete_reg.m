@@ -94,9 +94,9 @@ handles.src=uigetfile({'*.dcm','All DICOM Image Files';...
           'image.jpg');
 % Save the handles structure.
 guidata(hObject,handles)
-set(handles.listbox1, 'String',handles.src);
+set(handles.listbox1, 'String',[handles.src]);
 subplot(handles.h(9)); 
-%imshow(dicomread(sprintf('images/%s',handles.src)),[]);
+imshow(dicomread(sprintf('images/%s',handles.src)),[]);
 
 % --- Executes on button press in choose_dst.
 function choose_dst_Callback(hObject, eventdata, handles)
@@ -111,6 +111,7 @@ guidata(hObject,handles)
 
 %subplot(handles.h(8));
 set(handles.listbox1, 'String',[handles.dst]);
+set(handles.listbox2, 'String',[handles.dst]);
 %imshow(dicomread(sprintf('images/%s',handles.dst)),[]);
 
 % --- Executes on button press in det_run. 
@@ -340,7 +341,7 @@ function slider3_CreateFcn(hObject, eventdata, handles)
 
 % Hint: slider controls usually have a light gray background.
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
+    set(hObject,'BackgroundColor',[.9 .9 .9]); 
 end
 
 
@@ -350,15 +351,15 @@ function listbox1_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 str=get(hObject, 'String');
-image = get(hObject,'Value')
-handles.image=str{image}
-disp(handles.image)
-subplot(handles.h(6));
+image = get(hObject,'Value');
+handles.image=str{image};
+%disp(handles.image)
+subplot(handles.h(9));
 imshow(dicomread(sprintf('images/%s',handles.image)),[]);
 % Save the handles structure.
  guidata(hObject,handles)
 % Hints: contents = cellstr(get(hObject,'String')) returns listbox1 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from listbox1
+% contents{get(hObject,'Value')} returns selected item from listbox1
 
 
 % --- Executes during object creation, after setting all properties.
@@ -380,13 +381,13 @@ function listbox2_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 str=get(hObject, 'String');
-image = get(hObject,'Value')
-handles.image=str{image}
+image = get(hObject,'Value');
+handles.image=str{image};
 disp(handles.image)
-subplot(handles.h(9)); 
+subplot(handles.h(7)); 
 imshow(dicomread(sprintf('images/%s',handles.image)),[]);
 % Save the handles structure.
-guidata(hObject,handles
+guidata(hObject,handles);
 % Hints: contents = cellstr(get(hObject,'String')) returns listbox2 contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from listbox2
 
