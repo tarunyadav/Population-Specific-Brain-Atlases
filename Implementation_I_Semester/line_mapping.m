@@ -16,7 +16,7 @@ function [Transformation] = line_mapping(src_lines,dst_lines,src, dst,step_x,ste
                  d(1,2) = j;
                  d(1,3) = theta;
                  d(1,4) = 0;
-               %  d(1,5) = 0;
+                 d(1,5) = 0;
                  transformations = [transformations ; d];
                %end
              end
@@ -65,21 +65,21 @@ function [Transformation] = line_mapping(src_lines,dst_lines,src, dst,step_x,ste
                     
                         end
                     end
-                transformations(min_trans_row,4)=transformations(min_trans_row,4)+1;
+                transformations(min_trans_row,5)=transformations(min_trans_row,5)+1;
                 
              end
             end
          end
      end
      % choosing the maximum matching configuration
-     [value maximum] = max(transformations(:,4));
+     [value maximum] = max(transformations(:,5));
      min_distance = 10000000;
      min_distance_row = 1;
      for i=1:1:row_trans
         % if(transformations(i,4)>=20)
           %   disp(transformations(i,:)); 
          %end
-         if (transformations(i,4)==value)
+         if (transformations(i,5)==value)
             %disp(transformations(i,:)); 
             distance = (transformations(i,1)*transformations(i,1) + transformations(i,2)*transformations(i,2));
             if (distance < min_distance)

@@ -22,7 +22,7 @@ function varargout = complete_reg(varargin)
 
 % Edit the above text to modify the response to help complete_reg
 
-% Last Modified by GUIDE v2.5 20-Mar-2012 21:16:43
+% Last Modified by GUIDE v2.5 25-Mar-2012 23:17:25
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -111,7 +111,9 @@ function choose_dst_Callback(hObject, eventdata, handles)
 %subplot(handles.h(8));
 set(handles.listbox1, 'String',[handles.dst]);
 set(handles.listbox2, 'String',[handles.dst]);
+set(handles.listbox3, 'String',[handles.dst]);
 handles.dst_images = handles.dst;
+handles.src=handles.dst_images{1};
 % Save the handles structure.
 guidata(hObject,handles)
 
@@ -139,7 +141,7 @@ switch handles.det_algo;
         
         for i = 1: b
             disp(handles.dst_images(i));
-             [src_lines dst_lines src_points dst_points]= line_detection_hough(handles.dst_images{i},handles.dst_images{i});
+             [src_lines dst_lines src_points dst_points]= line_detection_hough(handles.dst_images{1},handles.dst_images{i});
              handles.src_lines(i)  = struct('lines',src_lines); 
              handles.dst_lines(i)=struct('lines',dst_lines);
              handles.src_points(i)=struct('points',src_points);
@@ -148,13 +150,13 @@ switch handles.det_algo;
        
         subplot(handles.h(7));
         imshow(dicomread(sprintf('images/%s',handles.dst_images{1})),[]), hold on
-%         for k = 1:length(handles.dst_lines(:,:,1))
-%              xy = [handles.dst_lines(k,1:2,1); handles.dst_lines(k,3:4,1)];
-%             plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
-%             % Plot beginnings and ends of lines
-%             plot(xy(1,1),xy(1,2),'x','LineWidth',1,'Color','yellow');
-%             plot(xy(2,1),xy(2,2),'x','LineWidth',1,'Color','red');
-%         end
+        for k = 1:length(handles.dst_lines(1).lines)
+             xy = [handles.dst_lines(1).lines(k,1:2); handles.dst_lines(1).lines(k,3:4,1)];
+            plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
+            % Plot beginnings and ends of lines
+            plot(xy(1,1),xy(1,2),'x','LineWidth',1,'Color','yellow');
+            plot(xy(2,1),xy(2,2),'x','LineWidth',1,'Color','red');
+        end
        disp('Lines Detection Over...')
     case 'Approx. Using Edges'
    
@@ -168,26 +170,38 @@ function map_run_Callback(hObject, eventdata, handles)
 % hObject    handle to map_run (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+[a b]=size(handles.dst_images);
 switch handles.map_algo;
+     
     case 'Point Mapping'
-            transformation= feature_mapping(transpose(handles.src_posinit(:,1:2)),transpose(handles.dst_posinit(:,1:2)),20,20,30);
+        disp('Applying Point Mapping for all given images...')
+        transformation(1,:)=[0,0,0,0,0];
+         for i = 2: b
+            transformation(i,:)= feature_mapping(transpose(handles.dst_posinit(1).points(:,1:2)),transpose(handles.dst_posinit(i).points(:,1:2)),20,20,30);
+         end
+         disp('Point Mapping is over...')
     case 'Line Mapping'
-             transformation =line_mapping(handles.src_lines,handles.dst_lines,transpose(handles.src_points),transpose(handles.dst_points),20,20,5);
+            disp('Applying Point Mapping for all given images...')
+            transformation(1,:)=[0,0,0,0,0];
+            for i = 2: b
+                transformation(i,:) =line_mapping(handles.src_lines(i).lines,handles.dst_lines(i).lines,transpose(handles.src_points(i).points),transpose(handles.dst_points(i).points),20,20,5);
+            end
+            disp('Line Mapping is over...')
 end
-trans_X = transformation(1,1);
-trans_Y = transformation(1,2);
-theta = -1*transformation(1,3);
+trans_X = transformation(2,1);
+trans_Y = transformation(2,2);
+theta = -1*transformation(2,3);
 T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
 %tformfwd([trans_X trans_Y],T);
 REGISTERED= imtransform(dicomread(sprintf('images/%s',handles.src)),T);
 T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
 REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
-subplot(handles.h(4));
+subplot(handles.h(6));
 imshow(REGISTERED,[]); 
-set(handles.translation_x,'String',transformation(1));
-set(handles.translation_y,'String',transformation(2));
-set(handles.rotation,'String',transformation(3));
-set(handles.votes,'String',transformation(5));
+set(handles.translation_x,'String',transformation(2,1));
+set(handles.translation_y,'String',transformation(2,2));
+set(handles.rotation,'String',transformation(2,3));
+set(handles.votes,'String',transformation(2,5));
 % Save the handles structure.
 handles.transformation = transformation;
  guidata(hObject,handles)
@@ -423,6 +437,46 @@ guidata(hObject,handles);
 % --- Executes during object creation, after setting all properties.
 function listbox2_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to listbox2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in listbox3.
+function listbox3_Callback(hObject, eventdata, handles)
+% hObject    handle to listbox3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+str=get(hObject, 'String');
+i = get(hObject,'Value');
+
+trans_X = handles.transformation(i,1);
+trans_Y = handles.transformation(i,2);
+theta = -1*handles.transformation(i,3);
+T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
+%tformfwd([trans_X trans_Y],T);
+REGISTERED= imtransform(dicomread(sprintf('images/%s',handles.src)),T);
+T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
+REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
+subplot(handles.h(6));
+imshow(REGISTERED,[]); 
+set(handles.translation_x,'String',handles.transformation(i,1));
+set(handles.translation_y,'String',handles.transformation(i,2));
+set(handles.rotation,'String',handles.transformation(i,3));
+set(handles.votes,'String',handles.transformation(i,5));
+ guidata(hObject,handles)
+% Hints: contents = cellstr(get(hObject,'String')) returns listbox3 contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from listbox3
+
+
+% --- Executes during object creation, after setting all properties.
+function listbox3_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to listbox3 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
