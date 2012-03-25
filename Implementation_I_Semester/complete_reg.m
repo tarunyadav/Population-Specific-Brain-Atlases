@@ -60,6 +60,8 @@ handles.det_algo='Point Detection';
 handles.map_algo='Point Mapping';
 handles.h = get(gcf,'Children');
 handles.image='';
+handles.dst_images='';
+
 
 %-----------------FINISH-----------------------------
 
@@ -106,61 +108,61 @@ function choose_dst_Callback(hObject, eventdata, handles)
  handles.dst=uigetfile({'*.dcm','All DICOM Image Files';...
           '*.*','All Files' },'Select Destination Files',...
           'image.jpg','MultiSelect','on');
-% Save the handles structure.
-guidata(hObject,handles)
-
 %subplot(handles.h(8));
 set(handles.listbox1, 'String',[handles.dst]);
 set(handles.listbox2, 'String',[handles.dst]);
-%imshow(dicomread(sprintf('images/%s',handles.dst)),[]);
+handles.dst_images = handles.dst;
+% Save the handles structure.
+guidata(hObject,handles)
 
 % --- Executes on button press in det_run. 
 function det_run_Callback(hObject, eventdata, handles)
 % hObject    handle to det_run (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+ [a b]=size(handles.dst_images);
+ 
 switch handles.det_algo;
-    case 'Point Detection'
-        subplot(handles.h(6));
-        handles.src_posinit=affdemo2(handles.src);
-        imshow(dicomread(sprintf('images/%s',handles.src)),[]), hold on
-        showellipticfeatures(handles.src_posinit,[1 0 1]);
-        
-        subplot(handles.h(5));
-        handles.dst_posinit=affdemo2(handles.dst);
-        imshow(dicomread(sprintf('images/%s',handles.dst)),[]), hold on
-        showellipticfeatures(handles.dst_posinit,[1 0 1]);
-           
+     case 'Point Detection'
+       % handles.dst_posinit = zeros(b);
+        disp('Applying Point Detection for all given images...')
+        for i = 1: b
+                disp(handles.dst_images(i));
+                handles.dst_posinit(i)=struct('points',affdemo2(handles.dst_images{i}));
+        end     
+         subplot(handles.h(7));
+         imshow(dicomread(sprintf('images/%s',handles.dst_images{1})),[]), hold on
+         showellipticfeatures(handles.dst_posinit(1).points,[1 0 1]);        
+         disp('Point Detection Over...')
     case 'Line Detection(Hough Transformation)'
-        [handles.src_lines handles.dst_lines handles.src_points handles.dst_points]=line_detection_hough(handles.src,handles.dst);
-        subplot(handles.h(6));
+        disp('Applying Line Detection for all given images...')
         
-        imshow(dicomread(sprintf('images/%s',handles.src)),[]), hold on
-        for k = 1:length(handles.src_lines)
-            
-            xy = [handles.src_lines(k,1:2); handles.src_lines(k,3:4)];
-            plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
-            % Plot beginnings and ends of lines
-            plot(xy(1,1),xy(1,2),'x','LineWidth',1,'Color','yellow');
-            plot(xy(2,1),xy(2,2),'x','LineWidth',1,'Color','red');
+        for i = 1: b
+            disp(handles.dst_images(i));
+             [src_lines dst_lines src_points dst_points]= line_detection_hough(handles.dst_images{i},handles.dst_images{i});
+             handles.src_lines(i)  = struct('lines',src_lines); 
+             handles.dst_lines(i)=struct('lines',dst_lines);
+             handles.src_points(i)=struct('points',src_points);
+             handles.dst_points(i)=struct('points',dst_points);
         end
-        
-        subplot(handles.h(5));
-        imshow(dicomread(sprintf('images/%s',handles.dst)),[]), hold on
-        for k = 1:length(handles.dst_lines)
-            xy = [handles.dst_lines(k,1:2); handles.dst_lines(k,3:4)];
-            plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
-            % Plot beginnings and ends of lines
-            plot(xy(1,1),xy(1,2),'x','LineWidth',1,'Color','yellow');
-            plot(xy(2,1),xy(2,2),'x','LineWidth',1,'Color','red');
-        end
-        
+       
+        subplot(handles.h(7));
+        imshow(dicomread(sprintf('images/%s',handles.dst_images{1})),[]), hold on
+%         for k = 1:length(handles.dst_lines(:,:,1))
+%              xy = [handles.dst_lines(k,1:2,1); handles.dst_lines(k,3:4,1)];
+%             plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
+%             % Plot beginnings and ends of lines
+%             plot(xy(1,1),xy(1,2),'x','LineWidth',1,'Color','yellow');
+%             plot(xy(2,1),xy(2,2),'x','LineWidth',1,'Color','red');
+%         end
+       disp('Lines Detection Over...')
     case 'Approx. Using Edges'
-        
+   
 end
  % Save the handles structure.
  guidata(hObject,handles)
-        
+
+
 % --- Executes on button press in map_run.
 function map_run_Callback(hObject, eventdata, handles)
 % hObject    handle to map_run (see GCBO)
@@ -382,10 +384,36 @@ function listbox2_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 str=get(hObject, 'String');
 image = get(hObject,'Value');
-handles.image=str{image};
-disp(handles.image)
-subplot(handles.h(7)); 
-imshow(dicomread(sprintf('images/%s',handles.image)),[]);
+%unit = get(hObject,'Units');
+%handles.image=str{image};
+switch handles.det_algo;
+    case 'Point Detection'
+        subplot(handles.h(7));
+        dst_posinit=affdemo2(str{image});
+        %disp(unit)
+        %disp(handles.src_posinit(image));
+        imshow(dicomread(sprintf('images/%s',str{image})),[]), hold on
+        %showellipticfeatures(handles.src_posinit(:,:,1),[1 0 1]);
+          showellipticfeatures(dst_posinit,[1 0 1]);
+           
+    case 'Line Detection(Hough Transformation)'
+        %Modify here for only one input for line detection
+        [src_lines dst_lines src_points dst_points]=line_detection_hough(str{image},str{image});
+        subplot(handles.h(7));
+        
+        imshow(dicomread(sprintf('images/%s',str{image})),[]), hold on
+        for k = 1:length(dst_lines)
+             xy = [dst_lines(k,1:2); dst_lines(k,3:4)];
+            plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
+            % Plot beginnings and ends of lines
+            plot(xy(1,1),xy(1,2),'x','LineWidth',1,'Color','yellow');
+            plot(xy(2,1),xy(2,2),'x','LineWidth',1,'Color','red');
+        end
+              
+    case 'Approx. Using Edges'
+        
+end
+ 
 % Save the handles structure.
 guidata(hObject,handles);
 % Hints: contents = cellstr(get(hObject,'String')) returns listbox2 contents as cell array

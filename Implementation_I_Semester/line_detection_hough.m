@@ -8,8 +8,8 @@
     [H_d,theta_d,rho_d] = hough(DST);
     P_s = houghpeaks(H_s,30,'threshold',ceil(0.3*max(H_s(:))));
     P_d = houghpeaks(H_d,30,'threshold',ceil(0.3*max(H_d(:))));
-    lines_s = houghlines(SRC,theta_s,rho_s,P_s,'FillGap',3,'MinLength',3);
-    lines_d = houghlines(DST,theta_d,rho_d,P_d,'FillGap',3,'MinLength',3);
+    lines_s = houghlines(SRC,theta_s,rho_s,P_s,'FillGap',3,'MinLength',5);
+    lines_d = houghlines(DST,theta_d,rho_d,P_d,'FillGap',3,'MinLength',5);
     
     src_points = [];
     dst_points = [];
