@@ -22,7 +22,7 @@ function varargout = complete_reg(varargin)
 
 % Edit the above text to modify the response to help complete_reg
 
-% Last Modified by GUIDE v2.5 25-Mar-2012 23:17:25
+% Last Modified by GUIDE v2.5 27-Mar-2012 21:28:45
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -149,7 +149,7 @@ switch handles.det_algo;
         end
        
         subplot(handles.h(7));
-        imshow(dicomread(sprintf('images/%s',handles.dst_images{1})),[]), hold on
+        imshow(dicomread(sprintf('images/%s',handles.dst_images{2})),[]), hold on
         for k = 1:length(handles.dst_lines(1).lines)
              xy = [handles.dst_lines(1).lines(k,1:2); handles.dst_lines(1).lines(k,3:4,1)];
             plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
@@ -188,12 +188,12 @@ switch handles.map_algo;
             end
             disp('Line Mapping is over...')
 end
-trans_X = transformation(2,1);
-trans_Y = transformation(2,2);
-theta = -1*transformation(2,3);
+trans_X = -1*transformation(2,1);
+trans_Y = -1*transformation(2,2);
+theta = transformation(2,3);
 T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
 %tformfwd([trans_X trans_Y],T);
-REGISTERED= imtransform(dicomread(sprintf('images/%s',handles.src)),T);
+REGISTERED= imtransform(dicomread(sprintf('images/%s',handles.dst_images{2})),T);
 T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
 REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
 subplot(handles.h(6));
@@ -368,10 +368,10 @@ function listbox1_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 str=get(hObject, 'String');
 image = get(hObject,'Value');
-handles.image=str{image};
+%handles.image2=str{image};
 %disp(handles.image)
 subplot(handles.h(9));
-imshow(dicomread(sprintf('images/%s',handles.image)),[]);
+imshow(dicomread(sprintf('images/%s',str{image})),[]); hold on
 % Save the handles structure.
  guidata(hObject,handles)
 % Hints: contents = cellstr(get(hObject,'String')) returns listbox1 contents as cell array
@@ -455,16 +455,16 @@ function listbox3_Callback(hObject, eventdata, handles)
 str=get(hObject, 'String');
 i = get(hObject,'Value');
 
-trans_X = handles.transformation(i,1);
-trans_Y = handles.transformation(i,2);
-theta = -1*handles.transformation(i,3);
+trans_X = -1*handles.transformation(i,1);
+trans_Y = -1*handles.transformation(i,2);
+theta = handles.transformation(i,3);
 T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
 %tformfwd([trans_X trans_Y],T);
-REGISTERED= imtransform(dicomread(sprintf('images/%s',handles.src)),T);
+REGISTERED= imtransform(dicomread(sprintf('images/%s',handles.dst_images{i})),T);
 T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
-REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
+REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,1)],'YData',[1 size(REGISTERED,1)]);
 subplot(handles.h(6));
-imshow(REGISTERED,[]); 
+imshow(REGISTERED,[]); hold on
 set(handles.translation_x,'String',handles.transformation(i,1));
 set(handles.translation_y,'String',handles.transformation(i,2));
 set(handles.rotation,'String',handles.transformation(i,3));
@@ -481,6 +481,49 @@ function listbox3_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 
 % Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in avg_run.
+function avg_run_Callback(hObject, eventdata, handles)
+% hObject    handle to avg_run (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+        reg_images=[];
+        for i =  1:length(handles.dst_images)
+                trans_X = -1*handles.transformation(i,1);
+                trans_Y = -1*handles.transformation(i,2);
+                theta = handles.transformation(i,3);
+                T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
+                REGISTERED= imtransform(dicomread(sprintf('images/%s',handles.dst_images{i})),T);
+                T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
+                REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,1)],'YData',[1 size(REGISTERED,1)]);
+                reg_images= [reg_images; REGISTERED];
+        end
+        handles.reg_images=reg_images;
+        I=template_average(handles.transformation,handles.reg_images);
+        subplot(handles.h(6));
+        imshow(I,[])
+% --- Executes on selection change in select_avg.
+function select_avg_Callback(hObject, eventdata, handles)
+% hObject    handle to select_avg (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns select_avg contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from select_avg
+
+
+% --- Executes during object creation, after setting all properties.
+function select_avg_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to select_avg (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
