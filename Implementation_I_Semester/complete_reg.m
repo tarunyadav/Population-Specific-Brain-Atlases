@@ -191,9 +191,11 @@ end
 trans_X = -1*transformation(2,1);
 trans_Y = -1*transformation(2,2);
 theta = transformation(2,3);
-T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
+%T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
 %tformfwd([trans_X trans_Y],T);
-REGISTERED= imtransform(dicomread(sprintf('images/%s',handles.dst_images{2})),T);
+%REGISTERED= imtransform(dicomread(sprintf('images/%s',handles.dst_images{2})),T);
+image=dicomread(sprintf('images/%s',handles.dst_images{2}));
+REGISTERED=imrotate(image,theta,'bilinear','crop')
 T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
 REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
 subplot(handles.h(6));
@@ -458,11 +460,13 @@ i = get(hObject,'Value');
 trans_X = -1*handles.transformation(i,1);
 trans_Y = -1*handles.transformation(i,2);
 theta = handles.transformation(i,3);
-T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
+ image=dicomread(sprintf('images/%s',handles.dst_images{i}));
+%T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
 %tformfwd([trans_X trans_Y],T);
-REGISTERED= imtransform(dicomread(sprintf('images/%s',handles.dst_images{i})),T);
+%REGISTERED= imtransform(image,T,'XData',[1 size(image,2)],'YData',[1 size(image,1)]);
+REGISTERED=imrotate(image,theta,'bilinear','crop');
 T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
-REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,1)],'YData',[1 size(REGISTERED,1)]);
+REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
 subplot(handles.h(6));
 imshow(REGISTERED,[]); hold on
 set(handles.translation_x,'String',handles.transformation(i,1));
@@ -497,14 +501,20 @@ function avg_run_Callback(hObject, eventdata, handles)
                 trans_X = -1*handles.transformation(i,1);
                 trans_Y = -1*handles.transformation(i,2);
                 theta = handles.transformation(i,3);
-                T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
-                REGISTERED= imtransform(dicomread(sprintf('images/%s',handles.dst_images{i})),T);
+                image=dicomread(sprintf('images/%s',handles.dst_images{i}));
+                %T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
+                %REGISTERED= imtransform(image,T,'XData',[1 size(image,2)],'YData',[1 size(image,1)]);
+                REGISTERED=imrotate(image,theta,'bilinear','crop');
                 T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
-                REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,1)],'YData',[1 size(REGISTERED,1)]);
+                REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
+                 %[ r c] =size(REGISTERED);
+                 %disp(r);disp(c);
+                % disp('\n');
                 reg_images= [reg_images; REGISTERED];
         end
         handles.reg_images=reg_images;
         I=template_average(handles.transformation,handles.reg_images);
+        
         subplot(handles.h(6));
         imshow(I,[])
 % --- Executes on selection change in select_avg.
