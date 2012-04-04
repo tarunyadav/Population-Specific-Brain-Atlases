@@ -160,7 +160,27 @@ switch handles.det_algo;
         end
        disp('Lines Detection Over...')
     case 'Approx. Using Edges'
-   
+                disp('Applying Line Detection using Polygon approx. for all given images...')
+                [src_lines src_points ]= line_detection_polygon(handles.dst_images{1},1);
+                for i = 1: b
+                    disp(handles.dst_images(i));
+                     [dst_lines dst_points]=line_detection_polygon(handles.dst_images{i},1);
+                     handles.src_lines(i)  = struct('lines',src_lines); 
+                     handles.dst_lines(i)=struct('lines',dst_lines);
+                     handles.src_points(i)=struct('points',src_points);
+                     handles.dst_points(i)=struct('points',dst_points);
+                end
+
+                subplot(handles.h(7));
+                imshow(dicomread(sprintf('images/%s',handles.dst_images{2})),[]), hold on
+                for k = 1:length(handles.dst_lines(1).lines)
+                     xy = [handles.dst_lines(1).lines(k,1:2); handles.dst_lines(1).lines(k,3:4,1)];
+                    plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
+                    % Plot beginnings and ends of lines
+                    plot(xy(1,1),xy(1,2),'x','LineWidth',1,'Color','yellow');
+                    plot(xy(2,1),xy(2,2),'x','LineWidth',1,'Color','red');
+                end
+               disp('Lines Detection using Polygon approx.  Over...')
 end
  % Save the handles structure.
  guidata(hObject,handles)
@@ -407,7 +427,6 @@ switch handles.det_algo;
     case 'Point Detection'
         subplot(handles.h(7));
         dst_posinit=affdemo2(str{image});
-        %disp(unit)
         %disp(handles.src_posinit(image));
         imshow(dicomread(sprintf('images/%s',str{image})),[]), hold on
         %showellipticfeatures(handles.src_posinit(:,:,1),[1 0 1]);
@@ -428,7 +447,16 @@ switch handles.det_algo;
         end
               
     case 'Approx. Using Edges'
-        
+         [dst_lines dst_points]=line_detection_polygon(str{image},1);
+        subplot(handles.h(7));
+        imshow(dicomread(sprintf('images/%s',str{image})),[]), hold on
+        for k = 1:length(dst_lines)
+             xy = [dst_lines(k,1:2); dst_lines(k,3:4)];
+            plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
+            % Plot beginnings and ends of lines
+            plot(xy(1,1),xy(1,2),'x','LineWidth',1,'Color','yellow');
+            plot(xy(2,1),xy(2,2),'x','LineWidth',1,'Color','red');
+        end
 end
  
 % Save the handles structure.
