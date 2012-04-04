@@ -58,6 +58,7 @@ handles.src = '';
 handles.dst = '';
 handles.det_algo='Point Detection';
 handles.map_algo='Point Mapping';
+handles.avg_algo='One step averaging';
 handles.h = get(gcf,'Children');
 handles.image='';
 handles.dst_images='';
@@ -491,32 +492,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in avg_run.
-function avg_run_Callback(hObject, eventdata, handles)
-% hObject    handle to avg_run (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-        reg_images=[];
-        for i =  1:length(handles.dst_images)
-                trans_X = -1*handles.transformation(i,1);
-                trans_Y = -1*handles.transformation(i,2);
-                theta = handles.transformation(i,3);
-                image=dicomread(sprintf('images/%s',handles.dst_images{i}));
-                %T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
-                %REGISTERED= imtransform(image,T,'XData',[1 size(image,2)],'YData',[1 size(image,1)]);
-                REGISTERED=imrotate(image,theta,'bilinear','crop');
-                T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
-                REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
-                 %[ r c] =size(REGISTERED);
-                 %disp(r);disp(c);
-                % disp('\n');
-                reg_images= [reg_images; REGISTERED];
-        end
-        handles.reg_images=reg_images;
-        I=template_average(handles.transformation,handles.reg_images);
-        
-        subplot(handles.h(6));
-        imshow(I,[])
 % --- Executes on selection change in select_avg.
 function select_avg_Callback(hObject, eventdata, handles)
 % hObject    handle to select_avg (see GCBO)
@@ -525,7 +500,11 @@ function select_avg_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns select_avg contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from select_avg
-
+str = get(hObject, 'String');
+val = get(hObject,'Value');
+handles.avg_algo= str{val};
+% Save the handles structure.
+guidata(hObject,handles)
 
 % --- Executes during object creation, after setting all properties.
 function select_avg_CreateFcn(hObject, eventdata, handles)
@@ -538,3 +517,64 @@ function select_avg_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in avg_run.
+function avg_run_Callback(hObject, eventdata, handles)
+% hObject    handle to avg_run (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+    switch handles.avg_algo;
+        case 'One step averaging'
+               %template=zeros(256,256); % hardcoded
+               L=length(handles.dst_images);
+               for i =  1:L
+                    trans_X = -1*handles.transformation(i,1);
+                    trans_Y = -1*handles.transformation(i,2);
+                     theta = handles.transformation(i,3);
+                    image=dicomread(sprintf('images/%s',handles.dst_images{i}));
+                    REGISTERED=imrotate(image,theta,'bilinear','crop');
+                    T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
+                    REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
+                    if(i==1)
+                        template=REGISTERED;
+                    else
+                        template = template + REGISTERED;
+                    end
+               end
+               K = round(template/L);
+        case 'Pair matching(similar)'
+                 reg_images=[];
+                for i =  1:length(handles.dst_images)
+                        trans_X = -1*handles.transformation(i,1);
+                        trans_Y = -1*handles.transformation(i,2);
+                        theta = handles.transformation(i,3);
+                        image=dicomread(sprintf('images/%s',handles.dst_images{i}));
+                       REGISTERED=imrotate(image,theta,'bilinear','crop');
+                        T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
+                        REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
+                         reg_images= [reg_images; REGISTERED];
+                end
+                handles.reg_images=reg_images;
+                K=template_average(handles.transformation,handles.reg_images,0);
+         case 'Pair matching(dissimilar)'   
+                reg_images=[];
+                for i =  1:length(handles.dst_images)
+                        trans_X = -1*handles.transformation(i,1);
+                        trans_Y = -1*handles.transformation(i,2);
+                        theta = handles.transformation(i,3);
+                        image=dicomread(sprintf('images/%s',handles.dst_images{i}));
+                        %T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
+                        %REGISTERED= imtransform(image,T,'XData',[1 size(image,2)],'YData',[1 size(image,1)]);
+                        REGISTERED=imrotate(image,theta,'bilinear','crop');
+                        T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
+                        REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
+                         
+                        reg_images= [reg_images; REGISTERED];
+                end
+                handles.reg_images=reg_images;
+                K=template_average(handles.transformation,handles.reg_images,1);
+
+    end
+  subplot(handles.h(6));
+  imshow(K,[])
