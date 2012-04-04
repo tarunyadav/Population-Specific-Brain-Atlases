@@ -22,7 +22,7 @@ function varargout = complete_reg(varargin)
 
 % Edit the above text to modify the response to help complete_reg
 
-% Last Modified by GUIDE v2.5 27-Mar-2012 21:28:45
+% Last Modified by GUIDE v2.5 04-Apr-2012 18:48:49
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -59,7 +59,7 @@ handles.dst = '';
 handles.det_algo='Point Detection';
 handles.map_algo='Point Mapping';
 handles.avg_algo='One step averaging';
-handles.h = get(gcf,'Children');
+%handles.h = get(gcf,'Children');
 handles.image='';
 handles.dst_images='';
 
@@ -98,7 +98,7 @@ handles.src=uigetfile({'*.dcm','All DICOM Image Files';...
 % Save the handles structure.
 guidata(hObject,handles)
 set(handles.listbox1, 'String',[handles.src]);
-subplot(handles.h(9)); 
+subplot(handles.src_init); 
 imshow(dicomread(sprintf('images/%s',handles.src)),[]);
 
 % --- Executes on button press in choose_dst.
@@ -115,6 +115,8 @@ set(handles.listbox2, 'String',[handles.dst]);
 set(handles.listbox3, 'String',[handles.dst]);
 handles.dst_images = handles.dst;
 handles.src=handles.dst_images{1};
+subplot(handles.src_init); 
+imshow(dicomread(sprintf('images/%s',handles.src)),[]);
 % Save the handles structure.
 guidata(hObject,handles)
 
@@ -131,9 +133,9 @@ switch handles.det_algo;
         disp('Applying Point Detection for all given images...')
         for i = 1: b
                 disp(handles.dst_images(i));
-                handles.dst_posinit(i)=struct('points',affdemo2(handles.dst_images{i}));
+                handles.dst_posinit(i)=struct('points',affdemo2(handles.dst_images{i},25));
         end     
-         subplot(handles.h(7));
+         subplot(handles.src_det);
          imshow(dicomread(sprintf('images/%s',handles.dst_images{1})),[]), hold on
          showellipticfeatures(handles.dst_posinit(1).points,[1 0 1]);        
          disp('Point Detection Over...')
@@ -149,7 +151,7 @@ switch handles.det_algo;
              handles.dst_points(i)=struct('points',dst_points);
         end
        
-        subplot(handles.h(7));
+        subplot(handles.src_det);
         imshow(dicomread(sprintf('images/%s',handles.dst_images{2})),[]), hold on
         for k = 1:length(handles.dst_lines(1).lines)
              xy = [handles.dst_lines(1).lines(k,1:2); handles.dst_lines(1).lines(k,3:4,1)];
@@ -161,17 +163,17 @@ switch handles.det_algo;
        disp('Lines Detection Over...')
     case 'Approx. Using Edges'
                 disp('Applying Line Detection using Polygon approx. for all given images...')
-                [src_lines src_points ]= line_detection_polygon(handles.dst_images{1},1);
+                [src_lines src_points ]= line_detection_polygon(handles.dst_images{1},5);
                 for i = 1: b
                     disp(handles.dst_images(i));
-                     [dst_lines dst_points]=line_detection_polygon(handles.dst_images{i},1);
+                     [dst_lines dst_points]=line_detection_polygon(handles.dst_images{i},5);
                      handles.src_lines(i)  = struct('lines',src_lines); 
                      handles.dst_lines(i)=struct('lines',dst_lines);
                      handles.src_points(i)=struct('points',src_points);
                      handles.dst_points(i)=struct('points',dst_points);
                 end
 
-                subplot(handles.h(7));
+                subplot(handles.src_det);
                 imshow(dicomread(sprintf('images/%s',handles.dst_images{2})),[]), hold on
                 for k = 1:length(handles.dst_lines(1).lines)
                      xy = [handles.dst_lines(1).lines(k,1:2); handles.dst_lines(1).lines(k,3:4,1)];
@@ -198,28 +200,30 @@ switch handles.map_algo;
         disp('Applying Point Mapping for all given images...')
         transformation(1,:)=[0,0,0,0,0];
          for i = 2: b
-            transformation(i,:)= feature_mapping(transpose(handles.dst_posinit(1).points(:,1:2)),transpose(handles.dst_posinit(i).points(:,1:2)),20,20,30);
+            transformation(i,:)= feature_mapping(transpose(handles.dst_posinit(1).points(:,1:2)),transpose(handles.dst_posinit(i).points(:,1:2)),5,5,10);
+            
          end
          disp('Point Mapping is over...')
     case 'Line Mapping'
             disp('Applying Point Mapping for all given images...')
             transformation(1,:)=[0,0,0,0,0];
             for i = 2: b
-                transformation(i,:) =line_mapping(handles.src_lines(i).lines,handles.dst_lines(i).lines,transpose(handles.src_points(i).points),transpose(handles.dst_points(i).points),20,20,5);
+                transformation(i,:) =line_mapping(handles.src_lines(i).lines,handles.dst_lines(i).lines,transpose(handles.src_points(i).points),transpose(handles.dst_points(i).points),5,5,5);
             end
             disp('Line Mapping is over...')
 end
-trans_X = -1*transformation(2,1);
-trans_Y = -1*transformation(2,2);
-theta = transformation(2,3);
+trans_X =transformation(2,1);
+trans_Y = transformation(2,2);
+theta = -1*transformation(2,3);
+
 %T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
 %tformfwd([trans_X trans_Y],T);
 %REGISTERED= imtransform(dicomread(sprintf('images/%s',handles.dst_images{2})),T);
-image=dicomread(sprintf('images/%s',handles.dst_images{2}));
-REGISTERED=imrotate(image,theta,'bilinear','crop')
+image=dicomread(sprintf('images/%s',handles.dst_images{1}));
+REGISTERED=imrotate(image,theta,'bilinear','crop');
 T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
 REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
-subplot(handles.h(6));
+subplot(handles.dst_map);
 imshow(REGISTERED,[]); 
 set(handles.translation_x,'String',transformation(2,1));
 set(handles.translation_y,'String',transformation(2,2));
@@ -393,7 +397,7 @@ str=get(hObject, 'String');
 image = get(hObject,'Value');
 %handles.image2=str{image};
 %disp(handles.image)
-subplot(handles.h(9));
+subplot(handles.src_init);
 imshow(dicomread(sprintf('images/%s',str{image})),[]); hold on
 % Save the handles structure.
  guidata(hObject,handles)
@@ -425,8 +429,8 @@ image = get(hObject,'Value');
 %handles.image=str{image};
 switch handles.det_algo;
     case 'Point Detection'
-        subplot(handles.h(7));
-        dst_posinit=affdemo2(str{image});
+        subplot(handles.src_det);
+        dst_posinit=affdemo2(str{image}, 50);
         %disp(handles.src_posinit(image));
         imshow(dicomread(sprintf('images/%s',str{image})),[]), hold on
         %showellipticfeatures(handles.src_posinit(:,:,1),[1 0 1]);
@@ -435,7 +439,7 @@ switch handles.det_algo;
     case 'Line Detection(Hough Transformation)'
         %Modify here for only one input for line detection
         [src_lines dst_lines src_points dst_points]=line_detection_hough(str{image},str{image});
-        subplot(handles.h(7));
+        subplot(handles.src_det);
         
         imshow(dicomread(sprintf('images/%s',str{image})),[]), hold on
         for k = 1:length(dst_lines)
@@ -447,8 +451,8 @@ switch handles.det_algo;
         end
               
     case 'Approx. Using Edges'
-         [dst_lines dst_points]=line_detection_polygon(str{image},1);
-        subplot(handles.h(7));
+         [dst_lines dst_points]=line_detection_polygon(str{image},5);
+        subplot(handles.src_det);
         imshow(dicomread(sprintf('images/%s',str{image})),[]), hold on
         for k = 1:length(dst_lines)
              xy = [dst_lines(k,1:2); dst_lines(k,3:4)];
@@ -486,17 +490,17 @@ function listbox3_Callback(hObject, eventdata, handles)
 str=get(hObject, 'String');
 i = get(hObject,'Value');
 
-trans_X = -1*handles.transformation(i,1);
-trans_Y = -1*handles.transformation(i,2);
-theta = handles.transformation(i,3);
- image=dicomread(sprintf('images/%s',handles.dst_images{i}));
+trans_X = handles.transformation(i,1);
+trans_Y = handles.transformation(i,2);
+theta = -1*handles.transformation(i,3);
+ image=dicomread(sprintf('images/%s',handles.dst_images{1}));
 %T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
 %tformfwd([trans_X trans_Y],T);
 %REGISTERED= imtransform(image,T,'XData',[1 size(image,2)],'YData',[1 size(image,1)]);
 REGISTERED=imrotate(image,theta,'bilinear','crop');
 T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
 REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
-subplot(handles.h(6));
+subplot(handles.dst_map);
 imshow(REGISTERED,[]); hold on
 set(handles.translation_x,'String',handles.transformation(i,1));
 set(handles.translation_y,'String',handles.transformation(i,2));
@@ -604,5 +608,5 @@ function avg_run_Callback(hObject, eventdata, handles)
                 K=template_average(handles.transformation,handles.reg_images,1);
 
     end
-  subplot(handles.h(6));
+  subplot(handles.template);
   imshow(K,[])

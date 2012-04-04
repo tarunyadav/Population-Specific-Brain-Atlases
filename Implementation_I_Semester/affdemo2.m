@@ -1,19 +1,8 @@
-function [posinit]= affdemo2(filename)
+function [posinit]= affdemo2(filename,corners)
 
-%
-% demo for interest point detection and their scale and shape adaptation
-%
-
-% !! change the path to image sources if needed
-%datapath='d:/work/affintpoints/images';
 datapath='images';
 
-if 1 % tests on real images
-
   % read image
-  %f1=il_rgb2gray(double(imread(sprintf('%s/subject01_happy_a.tif',datapath))));
-  %f1=il_rgb2gray(double(imread(sprintf('%s/car1-068-180.png',datapath))));
-  %f1=il_rgb2gray(double(imread(sprintf('%s/car1-066-153.png',datapath))));
   %iptsetpref('ImshowAxesVisible','on');
   f1=il_rgb2gray(double(dicomread(sprintf('%s/%s',datapath,filename))));
   %f1 = edge(f2,'canny',.17);
@@ -21,17 +10,18 @@ if 1 % tests on real images
   [ysize,xsize]=size(f1);
   %showgrey(f1)
 
-
   % set up parameters for point detection
-  nptsmax=50;   % max number of detected points (sorted by their strength values)
+  nptsmax=corners;   % max number of detected points (sorted by their strength values)
   kparam=0.04;  % constant for Harris corners
-  pointtype=1;  % type of interest points, 1: Harris; 2: Laplace; 3: det(Hessian)
+  pointtype=3;  % type of interest points, 1: Harris; 2: Laplace; 3: det(Hessian)
   sxl2=4;       % detection scales (variance)
   sxi2=2*sxl2;  % integration scale
 
   % detect points
   [posinit,valinit]=intpointdet(f1,kparam,sxl2,sxi2,pointtype,nptsmax);
 
+  
+%-------------------------------------------------------------Code for detecting finer feature points------------------------------------------------------
   % display detected points as ellipses
   %figure(gcf), clf
   
@@ -83,7 +73,6 @@ if 1 % tests on real images
 %     title('result of scale and shape adaptation')
 %     pause(0.1)
 %   end
-
+%---------------------------------------------------------------------------------------------------------------------------------------------------
   
-end
 end

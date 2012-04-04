@@ -1,6 +1,6 @@
 function [Transformation] = line_mapping(src_lines,dst_lines,src, dst,step_x,step_y,step_theta)
 
-      max_x = 250;max_y=250;max_theta = 180;
+      max_x = 40;max_y=40;max_theta = 40;
      [src_row_size src_column_size] = size(src);
      [dst_row_size dst_column_size] = size(dst);
      [src_line_row_size src_line_column_size] = size(src_lines);
@@ -29,7 +29,7 @@ function [Transformation] = line_mapping(src_lines,dst_lines,src, dst,step_x,ste
      %disp(src_line_row_size);
      % increament to appropiate configuration 
      for theta = -max_theta:step_theta:max_theta
-         rotated_points = ((150*translation)+ (([cos(theta*pi/180) -sin(theta*pi/180); sin(theta*pi/180) cos(theta*pi/180)])*((-150*translation)+ dst)));
+         rotated_points = ((128*translation)+ (([cos(theta*pi/180) -sin(theta*pi/180); sin(theta*pi/180) cos(theta*pi/180)])*((-128*translation)+ dst)));
          
          rotated_points_t = transpose(rotated_points);
          
@@ -44,30 +44,30 @@ function [Transformation] = line_mapping(src_lines,dst_lines,src, dst,step_x,ste
                  %disp(dst_lines(j,5));  
                 %disp(atan(abs(src_lines(i,5)-dst_lines(j,5))));
                 if( atan(abs(src_lines(i,5)-dst_lines(j,5)))<0.05)
-                    Tx = ((dst_lines(j,1)+dst_lines(j,3))/2)-((src_lines(i,1)+src_lines(i,3))/2);
-                    Ty = ((dst_lines(j,2)+dst_lines(j,4))/2)-((src_lines(i,2)+src_lines(i,4))/2);
-                    
-                    min_trans = 10000000;min_trans_row=0;
-                    for l=1:row_trans
-                        if transformations(l,3)==theta
-                            trans_x = Tx-transformations(l,1);
-                            trans_y = Ty-transformations(l,2);
-                            trans_x = trans_x*trans_x;
-                            trans_y = trans_y*trans_y;
-                            trans = trans_x + trans_y;
-                            
-                            if trans < min_trans
-                                
-                                min_trans = trans;
-                                min_trans_row = l;
-            
+                        Tx = ((dst_lines(j,1)+dst_lines(j,3))/2)-((src_lines(i,1)+src_lines(i,3))/2);
+                        Ty = ((dst_lines(j,2)+dst_lines(j,4))/2)-((src_lines(i,2)+src_lines(i,4))/2);
+
+                        min_trans = 10000000;min_trans_row=0;
+                        for l=1:row_trans
+                            if transformations(l,3)==theta
+                                trans_x = Tx-transformations(l,1);
+                                trans_y = Ty-transformations(l,2);
+                                trans_x = trans_x*trans_x;
+                                trans_y = trans_y*trans_y;
+                                trans = trans_x + trans_y;
+
+                                if trans < min_trans
+
+                                    min_trans = trans;
+                                    min_trans_row = l;
+
+                                end
+
                             end
-                    
                         end
-                    end
-                transformations(min_trans_row,5)=transformations(min_trans_row,5)+1;
+                       transformations(min_trans_row,5)=transformations(min_trans_row,5)+1;
                 
-             end
+               end
             end
          end
      end
@@ -90,7 +90,7 @@ function [Transformation] = line_mapping(src_lines,dst_lines,src, dst,step_x,ste
          
      end
      %disp(transformations(min_distance_row,:));
-     
+      disp(transformations);
      %Transformation = transformations(maximum,:);
      Transformation = transformations(min_distance_row,:);
 end
