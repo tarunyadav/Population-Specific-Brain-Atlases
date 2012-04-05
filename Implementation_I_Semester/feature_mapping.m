@@ -1,4 +1,4 @@
-function [Transformation] = feature_mapping(src, dst,step_x,step_y,step_theta)
+function [Transformation,transformations] = feature_mapping(src, dst,step_x,step_y,step_theta)
 
       max_x = 50;max_y=50;max_theta = 60;
      [src_row_size src_column_size] = size(src);

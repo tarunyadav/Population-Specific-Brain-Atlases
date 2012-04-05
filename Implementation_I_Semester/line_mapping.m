@@ -1,6 +1,6 @@
-function [Transformation] = line_mapping(src_lines,dst_lines,src, dst,step_x,step_y,step_theta)
+function [Transformation,transformations] = line_mapping(src_lines,dst_lines,src, dst,step_x,step_y,step_theta)
 
-      max_x = 40;max_y=40;max_theta = 40;
+      max_x = 200;max_y=200;max_theta = 100;
      [src_row_size src_column_size] = size(src);
      [dst_row_size dst_column_size] = size(dst);
      [src_line_row_size src_line_column_size] = size(src_lines);

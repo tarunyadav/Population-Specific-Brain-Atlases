@@ -22,7 +22,7 @@ function varargout = complete_reg(varargin)
 
 % Edit the above text to modify the response to help complete_reg
 
-% Last Modified by GUIDE v2.5 04-Apr-2012 18:48:49
+% Last Modified by GUIDE v2.5 05-Apr-2012 22:44:25
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -59,6 +59,7 @@ handles.dst = '';
 handles.det_algo='Point Detection';
 handles.map_algo='Point Mapping';
 handles.avg_algo='One step averaging';
+handles.templates(1)=struct('template',[]);
 %handles.h = get(gcf,'Children');
 handles.image='';
 handles.dst_images='';
@@ -109,7 +110,9 @@ function choose_dst_Callback(hObject, eventdata, handles)
  handles.dst=uigetfile({'*.dcm','All DICOM Image Files';...
           '*.*','All Files' },'Select Destination Files',...
           'image.jpg','MultiSelect','on');
-%subplot(handles.h(8));
+%subplot(handles.h(8));\
+%disp(handles.src{1});
+%handles.dst=cat(handles.src, handles.dst);
 set(handles.listbox1, 'String',[handles.dst]);
 set(handles.listbox2, 'String',[handles.dst]);
 set(handles.listbox3, 'String',[handles.dst]);
@@ -198,17 +201,20 @@ switch handles.map_algo;
      
     case 'Point Mapping'
         disp('Applying Point Mapping for all given images...')
-        transformation(1,:)=[0,0,0,0,0];
-         for i = 2: b
-            transformation(i,:)= feature_mapping(transpose(handles.dst_posinit(1).points(:,1:2)),transpose(handles.dst_posinit(i).points(:,1:2)),5,5,10);
-            
+        %transformation(1,:)=[0,0,0,0,0];
+        %transformation_config(1)=struct('config',[]);
+         for i = 1: b
+            [transformation(i,:) config]= feature_mapping(transpose(handles.dst_posinit(1).points(:,1:2)),transpose(handles.dst_posinit(i).points(:,1:2)),5,5,10);
+            transformation_config(i)=struct('config',config);
          end
          disp('Point Mapping is over...')
     case 'Line Mapping'
-            disp('Applying Point Mapping for all given images...')
-            transformation(1,:)=[0,0,0,0,0];
-            for i = 2: b
-                transformation(i,:) =line_mapping(handles.src_lines(i).lines,handles.dst_lines(i).lines,transpose(handles.src_points(i).points),transpose(handles.dst_points(i).points),5,5,5);
+            disp('Applying Line Mapping for all given images...')
+            %transformation(1,:)=[0,0,0,0,0];
+            %transformation_config(1)=struct('config',[]);
+            for i = 1: b
+                [transformation(i,:) config]=line_mapping(handles.src_lines(i).lines,handles.dst_lines(i).lines,transpose(handles.src_points(i).points),transpose(handles.dst_points(i).points),5,5,5);
+                transformation_config(i)=struct('config',config);
             end
             disp('Line Mapping is over...')
 end
@@ -231,6 +237,7 @@ set(handles.rotation,'String',transformation(2,3));
 set(handles.votes,'String',transformation(2,5));
 % Save the handles structure.
 handles.transformation = transformation;
+handles.transformation_config = transformation_config;
  guidata(hObject,handles)
 
 
@@ -575,6 +582,7 @@ function avg_run_Callback(hObject, eventdata, handles)
                     end
                end
                K = round(template/L);
+               handles.templates(1)= struct('template',K);
         case 'Pair matching(similar)'
                  reg_images=[];
                 for i =  1:length(handles.dst_images)
@@ -589,6 +597,7 @@ function avg_run_Callback(hObject, eventdata, handles)
                 end
                 handles.reg_images=reg_images;
                 K=template_average(handles.transformation,handles.reg_images,0);
+                handles.templates(2)= struct('template',K);
          case 'Pair matching(dissimilar)'   
                 reg_images=[];
                 for i =  1:length(handles.dst_images)
@@ -606,7 +615,83 @@ function avg_run_Callback(hObject, eventdata, handles)
                 end
                 handles.reg_images=reg_images;
                 K=template_average(handles.transformation,handles.reg_images,1);
-
+                handles.templates(3)= struct('template',K);
+        case 'Median Approach'
+                 reg_images=[];
+                for i =  1:length(handles.dst_images)
+                        trans_X = -1*handles.transformation(i,1);
+                        trans_Y = -1*handles.transformation(i,2);
+                        theta = handles.transformation(i,3);
+                        image=dicomread(sprintf('images/%s',handles.dst_images{i}));
+                        %T = maketform('affine',[cos(pi*theta/180) -sin(pi*theta/180) 0; sin(pi*theta/180) cos(pi*theta/180) 0; 0 0 1]);
+                        %REGISTERED= imtransform(image,T,'XData',[1 size(image,2)],'YData',[1 size(image,1)]);
+                        REGISTERED=imrotate(image,theta,'bilinear','crop');
+                        T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
+                        REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
+                        reg_images= [reg_images; REGISTERED];
+                end
+                handles.reg_images=reg_images;
+                [row column] = size(handles.reg_images);
+                
+                row = row/256;
+                no_of_images = row;
+               
+                K =image;
+                for i  = 1:256
+                    for j = 1:256
+                         i1 = i;   
+                         temp=[];
+                        for k = 1:no_of_images
+                            value = handles.reg_images(i1,j);
+                            i1 = i1+256;
+                            %disp(i1);
+                            temp = [temp value];
+                        end
+                        temp = sort(temp);
+                        if mod(no_of_images,2) == 0
+                            final_value = temp(no_of_images/2)+temp((no_of_images/2) + 1);
+                            final_value = round(final_value/2);
+                            K(i,j) = final_value;
+                            
+                        else
+                            final_value = temp((no_of_images+1)/2);
+                            K(i,j) = final_value;
+                        end
+                    end
+                end
+                handles.templates(4)= struct('template',K);
     end
+    
   subplot(handles.template);
   imshow(K,[])
+% Save the handles structure.
+guidata(hObject,handles)
+
+% --- Executes on button press in analysis.
+function analysis_Callback(hObject, eventdata, handles)
+% hObject    handle to analysis (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+analysis(handles.transformation_config,handles.templates)
+h=openfig('analysis','reuse');
+handles1=guihandles(h);
+set(handles1.listbox1, 'String',[handles.dst_images]);
+subplot(handles1.graph);
+y=handles.transformation_config(2).config(:,5);
+x=1:1:size(handles.transformation_config(2).config,1);
+disp(size(handles.transformation_config(2).config,1));
+plot(x,y)
+%disp(handles.templates(2).template(1,1)-handles.templates(1).template(1,1));
+image = handles.templates(2).template-handles.templates(1).template;
+subplot(handles1.template_diff);
+imshow(image,[]);
+sum = 0;
+ for i = 1:256
+     for j = 1:256
+         sum = sum + (image(i,j)*image(i,j));
+     end
+ end
+set(handles1.sum_diff,'String',sum);
+%subplot(handles1.template_diff);
+%imshow(handles.templates(1).template,[]);
