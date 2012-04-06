@@ -142,6 +142,7 @@ switch handles.det_algo;
          imshow(dicomread(sprintf('images/%s',handles.dst_images{1})),[]), hold on
          showellipticfeatures(handles.dst_posinit(1).points,[1 0 1]);        
          disp('Point Detection Over...')
+     %case not used in GUI
     case 'Line Detection(Hough Transformation)'
         disp('Applying Line Detection for all given images...')
         
@@ -203,17 +204,51 @@ switch handles.map_algo;
         disp('Applying Point Mapping for all given images...')
         %transformation(1,:)=[0,0,0,0,0];
         %transformation_config(1)=struct('config',[]);
+        % initialization of Matrix contating all transformations
+         transformations=[];
+         max_x = 70;max_y=70;max_theta = 80;
+         for i = -max_x:5:max_x
+             for j = -max_y:5:max_y
+                 for theta = -max_theta:5:max_theta
+                   %for s = .8:.2:1.2  
+                     d(1,1) = i;
+                     d(1,2) = j;
+                     d(1,3) = theta;
+                     d(1,4) = 0;
+                     d(1,5) = 0;
+                     transformations = [transformations ; d];
+                   %end
+                 end
+             end
+         end
          for i = 1: b
-            [transformation(i,:) config]= feature_mapping(transpose(handles.dst_posinit(1).points(:,1:2)),transpose(handles.dst_posinit(i).points(:,1:2)),5,5,10);
+            [transformation(i,:) config]= feature_mapping(transformations,transpose(handles.dst_posinit(1).points(:,1:2)),transpose(handles.dst_posinit(i).points(:,1:2)),5,5,5,handles.dst_images{i});
             transformation_config(i)=struct('config',config);
          end
          disp('Point Mapping is over...')
     case 'Line Mapping'
             disp('Applying Line Mapping for all given images...')
+             % initialization of Matrix contating all transformations
+             transformations=[];
+             max_x = 70;max_y=70;max_theta = 80;
+             for i = -max_x:5:max_x
+                 for j = -max_y:5:max_y
+                     for theta = -max_theta:5:max_theta
+                       %for s = .8:.2:1.2  
+                         d(1,1) = i;
+                         d(1,2) = j;
+                         d(1,3) = theta;
+                         d(1,4) = 0;
+                         d(1,5) = 0;
+                         transformations = [transformations ; d];
+                       %end
+                     end
+                 end
+             end
             %transformation(1,:)=[0,0,0,0,0];
             %transformation_config(1)=struct('config',[]);
             for i = 1: b
-                [transformation(i,:) config]=line_mapping(handles.src_lines(i).lines,handles.dst_lines(i).lines,transpose(handles.src_points(i).points),transpose(handles.dst_points(i).points),5,5,5);
+                [transformation(i,:) config]=line_mapping(transformations,handles.src_lines(i).lines,handles.dst_lines(i).lines,transpose(handles.src_points(i).points),transpose(handles.dst_points(i).points),5,5,5,handles.dst_images{i});
                 transformation_config(i)=struct('config',config);
             end
             disp('Line Mapping is over...')
@@ -685,7 +720,7 @@ plot(x,y)
 %disp(handles.templates(2).template(1,1)-handles.templates(1).template(1,1));
 image = handles.templates(2).template-handles.templates(1).template;
 subplot(handles1.template_diff);
-imshow(image,[]);
+imshow(abs(image),[]);
 sum = 0;
  for i = 1:256
      for j = 1:256

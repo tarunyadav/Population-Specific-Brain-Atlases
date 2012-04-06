@@ -1,33 +1,20 @@
-function [Transformation,transformations] = line_mapping(src_lines,dst_lines,src, dst,step_x,step_y,step_theta)
+function [Transformation,transformations] = line_mapping(transformations,src_lines,dst_lines,src, dst,step_x,step_y,step_theta,image_name)
 
-      max_x = 200;max_y=200;max_theta = 100;
+      max_x = 70;max_y=70;max_theta = 80;
      [src_row_size src_column_size] = size(src);
      [dst_row_size dst_column_size] = size(dst);
      [src_line_row_size src_line_column_size] = size(src_lines);
      [dst_line_row_size dst_line_column_size] = size(dst_lines);
      
-     % initialization of Matrix contating all transformations
-     transformations=[];
-     for i = -max_x:step_x:max_x
-         for j = -max_y:step_y:max_y
-             for theta = -max_theta:step_theta:max_theta
-               %for s = .8:.2:1.2  
-                 d(1,1) = i;
-                 d(1,2) = j;
-                 d(1,3) = theta;
-                 d(1,4) = 0;
-                 d(1,5) = 0;
-                 transformations = [transformations ; d];
-               %end
-             end
-         end
-     end
-     [row_trans column_trans]=size(transformations);  
+    [row_trans column_trans]=size(transformations);  
      translation = ones(dst_row_size,dst_column_size);
      %disp(dst_lines);
      %disp(src_lines);
      %disp(src_line_row_size);
      % increament to appropiate configuration 
+    h = waitbar(0,'Please wait...');
+    steps = 32;
+    step=1;
      for theta = -max_theta:step_theta:max_theta
          rotated_points = ((128*translation)+ (([cos(theta*pi/180) -sin(theta*pi/180); sin(theta*pi/180) cos(theta*pi/180)])*((-128*translation)+ dst)));
          
@@ -70,9 +57,12 @@ function [Transformation,transformations] = line_mapping(src_lines,dst_lines,src
                end
             end
          end
+         step=step+1;
+         waitbar(step / steps,h,sprintf('Computing the Transfromations for %s',image_name));
      end
+     close(h)
      % choosing the maximum matching configuration
-     [value maximum] = max(transformations(:,5));
+     [value maximum] = max(transformations(2000:22000,5));
      min_distance = 10000000;
      min_distance_row = 1;
      for i=1:1:row_trans
