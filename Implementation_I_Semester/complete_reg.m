@@ -110,9 +110,8 @@ function choose_dst_Callback(hObject, eventdata, handles)
  handles.dst=uigetfile({'*.dcm','All DICOM Image Files';...
           '*.*','All Files' },'Select Destination Files',...
           'image.jpg','MultiSelect','on');
-%subplot(handles.h(8));\
-%disp(handles.src{1});
-%handles.dst=cat(handles.src, handles.dst);
+src=get(handles.listbox1,'String');
+handles.dst=[src, cellstr(handles.dst)];
 set(handles.listbox1, 'String',[handles.dst]);
 set(handles.listbox2, 'String',[handles.dst]);
 set(handles.listbox3, 'String',[handles.dst]);
