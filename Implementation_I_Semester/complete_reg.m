@@ -133,6 +133,7 @@ switch handles.det_algo;
      case 'Point Detection'
        % handles.dst_posinit = zeros(b);
         disp('Applying Point Detection for all given images...')
+        t_init=cputime;
         for i = 1: b
                 disp(handles.dst_images(i));
                 handles.dst_posinit(i)=struct('points',affdemo2(handles.dst_images{i},25));
@@ -140,11 +141,12 @@ switch handles.det_algo;
          subplot(handles.src_det);
          imshow(dicomread(sprintf('images/%s',handles.dst_images{1})),[]), hold on
          showellipticfeatures(handles.dst_posinit(1).points,[1 0 1]);        
-         disp('Point Detection Over...')
+         t_end=cputime;
+         fprintf('Point Detection Over. Time Taken is %f \n',t_end-t_init);
      %case not used in GUI
     case 'Line Detection(Hough Transformation)'
         disp('Applying Line Detection for all given images...')
-        
+         t_init=cputime;
         for i = 1: b
             disp(handles.dst_images(i));
              [src_lines dst_lines src_points dst_points]= line_detection_hough(handles.dst_images{1},handles.dst_images{i});
@@ -163,12 +165,14 @@ switch handles.det_algo;
             plot(xy(1,1),xy(1,2),'x','LineWidth',1,'Color','yellow');
             plot(xy(2,1),xy(2,2),'x','LineWidth',1,'Color','red');
         end
-       disp('Lines Detection Over...')
+         t_end=cputime;
+         fprintf('Line Detection Over. Time Taken is %f \n',t_end-t_init);
     case 'Approx. Using Edges'
                 disp('Applying Line Detection using Polygon approx. for all given images...')
+                 t_init=cputime;
                 [src_lines src_points ]= line_detection_polygon(handles.dst_images{1},5);
                 for i = 1: b
-                    disp(handles.dst_images(i));
+                     disp(handles.dst_images(i));
                      [dst_lines dst_points]=line_detection_polygon(handles.dst_images{i},5);
                      handles.src_lines(i)  = struct('lines',src_lines); 
                      handles.dst_lines(i)=struct('lines',dst_lines);
@@ -185,7 +189,8 @@ switch handles.det_algo;
                     plot(xy(1,1),xy(1,2),'x','LineWidth',1,'Color','yellow');
                     plot(xy(2,1),xy(2,2),'x','LineWidth',1,'Color','red');
                 end
-               disp('Lines Detection using Polygon approx.  Over...')
+                t_end=cputime;
+                fprintf('Line Detection using polygon approximation is over. Time Taken is %f  and Lines detected are %d \n',t_end-t_init,length(dst_lines));
 end
  % Save the handles structure.
  guidata(hObject,handles)
@@ -201,8 +206,7 @@ switch handles.map_algo;
      
     case 'Point Mapping'
         disp('Applying Point Mapping for all given images...')
-        %transformation(1,:)=[0,0,0,0,0];
-        %transformation_config(1)=struct('config',[]);
+        t_init=cputime;
         % initialization of Matrix contating all transformations
          transformations=[];
          max_x = 70;max_y=70;max_theta = 80;
@@ -224,9 +228,11 @@ switch handles.map_algo;
             [transformation(i,:) config]= feature_mapping(transformations,transpose(handles.dst_posinit(1).points(:,1:2)),transpose(handles.dst_posinit(i).points(:,1:2)),5,5,5,handles.dst_images{i});
             transformation_config(i)=struct('config',config);
          end
-         disp('Point Mapping is over...')
+         t_end=cputime;
+         fprintf('Point Mapping is Over. Time Taken is %f  \n',t_end-t_init);
     case 'Line Mapping'
             disp('Applying Line Mapping for all given images...')
+            t_init=cputime;
              % initialization of Matrix contating all transformations
              transformations=[];
              max_x = 70;max_y=70;max_theta = 80;
@@ -250,7 +256,8 @@ switch handles.map_algo;
                 [transformation(i,:) config]=line_mapping(transformations,handles.src_lines(i).lines,handles.dst_lines(i).lines,transpose(handles.src_points(i).points),transpose(handles.dst_points(i).points),5,5,5,handles.dst_images{i});
                 transformation_config(i)=struct('config',config);
             end
-            disp('Line Mapping is over...')
+            t_end=cputime;
+             fprintf('Line Mapping is Over. Time Taken is %f \n',t_end-t_init);
 end
 trans_X =transformation(2,1);
 trans_Y = transformation(2,2);
@@ -600,6 +607,8 @@ function avg_run_Callback(hObject, eventdata, handles)
     switch handles.avg_algo;
         case 'One step averaging'
                %template=zeros(256,256); % hardcoded
+               disp('Applying One step averaging to generate the template...')
+               t_init=cputime;
                L=length(handles.dst_images);
                for i =  1:L
                     trans_X = -1*handles.transformation(i,1);
@@ -617,7 +626,11 @@ function avg_run_Callback(hObject, eventdata, handles)
                end
                K = round(template/L);
                handles.templates(1)= struct('template',K);
+               t_end=cputime;
+               fprintf('Template generation using One step averaging is over. Time taken is %f ...',t_end-t_init);
         case 'Pair matching(similar)'
+                disp('Applying Pair matching(similar) to generate the template \n')
+                 t_init=cputime;
                  reg_images=[];
                 for i =  1:length(handles.dst_images)
                         trans_X = -1*handles.transformation(i,1);
@@ -632,7 +645,11 @@ function avg_run_Callback(hObject, eventdata, handles)
                 handles.reg_images=reg_images;
                 K=template_average(handles.transformation,handles.reg_images,0);
                 handles.templates(2)= struct('template',K);
+                t_end=cputime;
+               fprintf('Template generation using Pair matching(similar) is over. Time taken is %f ...',t_end-t_init);
          case 'Pair matching(dissimilar)'   
+                disp('Applying Pair matching(dissimilar) to generate the template \n')
+                 t_init=cputime;
                 reg_images=[];
                 for i =  1:length(handles.dst_images)
                         trans_X = -1*handles.transformation(i,1);
@@ -650,8 +667,12 @@ function avg_run_Callback(hObject, eventdata, handles)
                 handles.reg_images=reg_images;
                 K=template_average(handles.transformation,handles.reg_images,1);
                 handles.templates(3)= struct('template',K);
+                 t_end=cputime;
+                fprintf('Template generation using Pair matching(dissimilar) is over. Time taken is %f \n',t_end-t_init);
         case 'Median Approach'
-                 reg_images=[];
+                disp('Applying Median Approach to generate the template...')
+                 t_init=cputime;
+                reg_images=[];
                 for i =  1:length(handles.dst_images)
                         trans_X = -1*handles.transformation(i,1);
                         trans_Y = -1*handles.transformation(i,2);
@@ -694,6 +715,8 @@ function avg_run_Callback(hObject, eventdata, handles)
                     end
                 end
                 handles.templates(4)= struct('template',K);
+                t_end=cputime;
+               fprintf('Template generation using Median Approach is over. Time taken is %f  \n',t_end-t_init);
     end
     
   subplot(handles.template);
@@ -706,7 +729,7 @@ function analysis_Callback(hObject, eventdata, handles)
 % hObject    handle to analysis (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+disp('Analysis Started...');
 analysis(handles.transformation_config,handles.templates)
 h=openfig('analysis','reuse');
 handles1=guihandles(h);

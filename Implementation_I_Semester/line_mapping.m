@@ -80,7 +80,6 @@ function [Transformation,transformations] = line_mapping(transformations,src_lin
          
      end
      %disp(transformations(min_distance_row,:));
-      disp(transformations);
      %Transformation = transformations(maximum,:);
      Transformation = transformations(min_distance_row,:);
 end
