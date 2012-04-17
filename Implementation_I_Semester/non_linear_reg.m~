@@ -1,0 +1,11 @@
+function[]=non_linear_reg(src_image,dst_image)
+    datapath='images';
+    src= dicomread(sprintf('%s/%s',datapath,src_image));
+    dst= dicomread(sprintf('%s/%s',datapath,dst_image));
+    [n_x n_y src_points dst_points] = non_linear_CP(src,dst);
+    new_src= non_linear_feature_mapping(n_x,n_y,src_points,dst_points,src,dst);
+    subplot(1,2,1);
+    imshow(dst,[]);
+    subplot(1,2,2);
+    imshow(new_s,[]);
+end
