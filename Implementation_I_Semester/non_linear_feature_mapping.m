@@ -1,32 +1,38 @@
-function [Image] = non_linear_feature_mapping(n_x,n_y,src_points, dst_points,Image)
-     Image_old=Image; 
-    for x=50:256
-         for y=50:256
-                i=floor(x/60)-1;
-                j=floor(y/60)-1;
-                %u=x/60-floor(x/60);
-                %v=y/60-floor(x/60);
-                u=x/256;
-                v=y/256;
+function [dst] = non_linear_feature_mapping(n_x,n_y,src_points, dst_points,src,dst)
+     
+     for i=1:256
+         for j=1:256
+               dst(i,j)=0;
+         end
+     end
+     h=waitbar(0,'Please wait...');
+     steps=236;
+     step=1;
+    for x=10:246
+         for y=10:246
+                i=floor(x/5)-1;
+                j=floor(y/5)-1;
+                u=x/5-floor(x/5);
+                v=y/5-floor(y/5);
                 BERNSTEIN_u = bernstein_poly(2,u);
                 BERNSTEIN_v=  bernstein_poly(2,v);
+                BERNSTEIN_u(1,2)=BERNSTEIN_u(1,2)+1;
+                BERNSTEIN_v(1,2)=BERNSTEIN_v(1,2)+1;
+                BERNSTEIN_u = BERNSTEIN_u/2;
+                BERNSTEIN_v = BERNSTEIN_v/2;
                 A=[0 0];
-                for l=0:2
+               for l=0:2
                     for m=0:2
-                        if(i+l>=0 && i+l<=256 && j+m>=0 && j+m<256)
-                            A=A+ BERNSTEIN_u(l+1)*BERNSTEIN_v(m+1)*dst_points((i+l)*n_y +(j+m)+1);
-                            % disp((i+l)*n_y +(j+m)+1);
-                        end
+                            A=A+ BERNSTEIN_u(1,l+1)*BERNSTEIN_v(1,m+1)*dst_points(((i-1)+l)*n_y +(j+m),:);
                     end
                 end
-                disp('old');
-                disp(x);
-                disp(y);
-                disp('new');
-                disp(round(A(1)));
-                disp(round(A(2)));
-                Image(round(A(1)),round(A(2)))=Image_old(x,y);
-                %Image(x,y)=0;
+                %fprintf(' x,y are %d,%d and new_x,new_y are %d, %d\n',x,y,round(A(1)),round(A(2)));
+                if (round(A(1))>0 && round(A(2))>0)
+                    dst(round(A(1)),round(A(2)))=src(x,y);
+                end
          end
+         waitbar(step/steps,h,'Applying Free Form deformation to the source image...');
+         step=step+1;
     end
+    close(h);
 end
