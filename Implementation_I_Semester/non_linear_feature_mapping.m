@@ -27,11 +27,9 @@ function [dst] = non_linear_feature_mapping(n_x,n_y,src_points, dst_points,src,d
                     end
                 end
                 %fprintf(' x,y are %d,%d and new_x,new_y are %d, %d\n',x,y,round(A(1)),round(A(2)));
-                if (round(A(1))>0 && round(A(2))>0)
-                    dst(round(A(1)),round(A(2)))=src(x,y);
-                end
+                 dst(floor(A(1)),floor(A(2)))=src(x,y);
          end
-         waitbar(step/steps,h,'Applying Free Form deformation to the source image...');
+         waitbar(step/steps,h,'Applying Free Form deformation to the images...');
          step=step+1;
     end
     close(h);

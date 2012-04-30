@@ -22,7 +22,7 @@ function varargout = complete_reg(varargin)
 
 % Edit the above text to modify the response to help complete_reg
 
-% Last Modified by GUIDE v2.5 05-Apr-2012 22:44:25
+% Last Modified by GUIDE v2.5 30-Apr-2012 23:00:44
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -63,7 +63,7 @@ handles.templates(1)=struct('template',[]);
 %handles.h = get(gcf,'Children');
 handles.image='';
 handles.dst_images='';
-
+handles.non_linear=0;
 
 %-----------------FINISH-----------------------------
 
@@ -619,6 +619,12 @@ function avg_run_Callback(hObject, eventdata, handles)
                     T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
                     REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
                     if(i==1)
+                            REG_SRC= REGISTERED;
+                    end
+                    if(handles.non_linear==1)
+                            REGISTERED=non_linear_reg(REG_SRC,REGISTERED);
+                    end
+                    if(i==1)
                         template=REGISTERED;
                     else
                         template = template + REGISTERED;
@@ -640,6 +646,12 @@ function avg_run_Callback(hObject, eventdata, handles)
                        REGISTERED=imrotate(image,theta,'bilinear','crop');
                         T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
                         REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
+                        if(i==1)
+                            REG_SRC= REGISTERED;
+                        end
+                        if(handles.non_linear==1)
+                            REGISTERED=non_linear_reg(REG_SRC,REGISTERED);
+                        end
                          reg_images= [reg_images; REGISTERED];
                 end
                 handles.reg_images=reg_images;
@@ -661,7 +673,12 @@ function avg_run_Callback(hObject, eventdata, handles)
                         REGISTERED=imrotate(image,theta,'bilinear','crop');
                         T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
                         REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
-                         
+                        if(i==1)
+                            REG_SRC= REGISTERED;
+                        end
+                        if(handles.non_linear==1)
+                            REGISTERED=non_linear_reg(REG_SRC,REGISTERED);
+                        end
                         reg_images= [reg_images; REGISTERED];
                 end
                 handles.reg_images=reg_images;
@@ -683,6 +700,12 @@ function avg_run_Callback(hObject, eventdata, handles)
                         REGISTERED=imrotate(image,theta,'bilinear','crop');
                         T = maketform('affine',[1 0 0; 0 1 0; trans_X trans_Y 1]);
                         REGISTERED= imtransform(REGISTERED,T,'XData',[1 size(REGISTERED,2)],'YData',[1 size(REGISTERED,1)]);
+                        if(i==1)
+                            REG_SRC= REGISTERED;
+                        end
+                        if(handles.non_linear==1)
+                            REGISTERED=non_linear_reg(REG_SRC,REGISTERED);
+                        end
                         reg_images= [reg_images; REGISTERED];
                 end
                 handles.reg_images=reg_images;
@@ -752,3 +775,13 @@ sum = 0;
 set(handles1.sum_diff,'String',sum);
 %subplot(handles1.template_diff);
 %imshow(handles.templates(1).template,[]);
+
+
+% --- Executes on button press in nonlinear.
+function nonlinear_Callback(hObject, eventdata, handles)
+% hObject    handle to nonlinear (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.non_linear = get(hObject,'Value');
+% Save the handles structure.
+guidata(hObject,handles)
